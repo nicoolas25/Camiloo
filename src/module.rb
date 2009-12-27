@@ -9,7 +9,7 @@ module Camiloo
     def redirect(uri, *args)
       base = base_uri
       base += '/' unless uri[0] == '/' or base[-1] == '/'
-      redirect_to(base + uri, *args)
+      redirect_outside(base + uri, *args)
     end
 
     # redirect_outside acts from the global path (like Sinatra::Base#redirect)
