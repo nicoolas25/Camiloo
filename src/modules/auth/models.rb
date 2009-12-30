@@ -1,4 +1,28 @@
+# Camiloo authentication module (models)
+# Copyright (c) 2009 Julien Peeters <contact@julienpeeters.fr>
+#                    Nicolas Zermati <nicolas.zermati@gmail.com>
+#
+# This file is part of the Camiloo project.
+#
+# Camiloo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# Foobar is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Authors:
+#   Julien Peeters <contact@julienpeeters.fr>
+#   Nicolas Zermati <nicolas.zermati@gmail.com>
+
 require 'dm-core'
+require 'digest/sha1'
 
 module Camiloo
   module Auth
@@ -11,27 +35,13 @@ module Camiloo
       property :lname,    String,  :required => true
       
       has n, :roles, :through => Resource # many_to_many
-      has 1, :session
       
-      def initialize(username, passwd)
-        attribute_set (:username, username)
-        attribute_set (:password, Digest::SHA1.hexdigest(passwd))
+      def initialize(username, passwd, fname='unknown', lname='unknown')
+        attribute_set(:username, username)
+        attribute_set(:password, Digest::SHA1.hexdigest(passwd))
+        attribute_set(:fname, fname)
+        attribute_set(:lname, lname)
         save
-      end
-
-      def is_logged?
-        diff_time = Time.now - session.log_time
-        session.logged_in and diff_time < Session.expired_time
-      end
-
-      def login!(passwd)
-        hash = Digest::SHA1.hexdigest(passwd)
-        match = hash == password
-        session.logged_in, session.log_time = true, Time.now if match
-      end
-      
-      def logout!
-        session.logged_in = false
       end
 
       def password=(passwd)
@@ -39,8 +49,12 @@ module Camiloo
       end
 
       def change_password!(new_passwd)
-        password = new_passwd if is_logged?
+        password = new_passwd
         save
+      end
+
+      def password_match?(passwd)
+        password == Digest::SHA1.hexdigest(passwd)
       end
 
       def self.by_user_name(username)
@@ -48,20 +62,6 @@ module Camiloo
         raise ArgumentError, username if r.nil?
         r
       end
-    end
-    
-    class Session
-      include DataMapper::Resource
-
-      property :sid,       Integer,  :key => true
-      property :logged_in, Boolean,  :required => true, :default => false
-      property :log_time,  DateTime, :requires => true
-
-      def expired_time
-        3600
-      end
-
-      belongs_to :user
     end
 
     class ContentType
@@ -84,7 +84,7 @@ module Camiloo
       
       def self.by_name(name)
         r = get(name)
-        throw ArgumentError, name if r.nil?
+        raise ArgumentError, name if r.nil?
         r
       end
     end
@@ -129,5 +129,5 @@ module Camiloo
         r
       end
     end
-  end
-end
+  end # Auth
+end # Camiloo
