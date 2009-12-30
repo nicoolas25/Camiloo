@@ -29,37 +29,35 @@ module Camiloo
     helpers Camiloo::Auth::Helpers
     
     get '/login' do
-      ref = request.referer
-      ref = base_uri+"/login" if ref == '/'
-      if user = session[:auth_user]
-        msg = user.username
-      else
-        msg = "Unknown user"
-      end
+      ref = (back == '/') ? base_uri+"/login" : back
+      msg = (user = session[:auth_user]) ? user.username : "Unknown user"
       msg + "<br/>" +
         "<form method='POST' action='#{base_uri}/login'>" +
         "<input type='text' name='user'>" +
         "<input type='text' name='pass'>" +
         "<input type='hidden' name='redirect' value='#{ref}'>" +
         "<input type='submit' value='connect'>" +
-        "</form>"
+        "</form>" +
+        "<form method='GET' action='#{base_uri}/logout'>" +
+        "<input type='submit' value='lougout'>" +
+        "</form>" 
     end
-    
+
     get '/logout' do
       session.delete :auth_user
-      "Logout page must be here !"
+      redirect_outside back
     end
-    
+
     post '/login' do
       begin
-        user = Auth::User.by_user_name(params[:user])
+        user = Camiloo::Auth::User.by_user_name(params[:user])
         if user.password_match?(params[:pass]) 
           session[:auth_user] = user
           redirect_outside params[:redirect]
         else
           redirect '/login'
         end
-      rescue ArgumentError => unknown_username
+      rescue ArgumentError => unknown_username 
         redirect '/login'
       end
     end

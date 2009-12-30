@@ -27,12 +27,11 @@ module Camiloo
   module Auth
     module Helpers
       def authorized?(symb)
-        if session.key?(:auth_user)
+        begin
           user = Auth::User.by_user_name(session[:auth_user])
-          return false if user.nil? # someone try to hack
           !user.roles.first(:name => symb.to_s).nil?
-        else
-          return false
+        rescue Exception => ex
+          false
         end
       end
       
@@ -41,19 +40,13 @@ module Camiloo
       end
       
       def login!
-        if respond_to?(:redirect_outside)
-          redirect_outside '/auth/login'
-        else
-          redirect '/auth/login'
-        end
+        redirect_outside '/auth/login' if respond_to?(:redirect_outside)
+        redirect '/auth/login'
       end
       
       def logout!
-        if respond_to?(:redirect_outside)
-          redirect_outside '/auth/logout'
-        else
-          redirect '/auth/logout'
-        end
+        redirect_outside '/auth/logout' if respond_to?(:redirect_outside)
+        redirect '/auth/logout'
       end
     end # Helpers
   end # Auth
