@@ -9,13 +9,13 @@
 # published by the Free Software Foundation, either version 3 of
 # the License, or (at your option) any later version.
 #
-# Foobar is distributed in the hope that it will be useful,
+# Camiloo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
+#
 # You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+# along with Camiloo.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors:
 #   Julien Peeters <contact@julienpeeters.fr>
@@ -34,16 +34,16 @@ module Camiloo
           false
         end
       end
-      
+
       def authorize!(symb)
         login! unless authorized?(symb)
       end
-      
+
       def login!
         redirect_outside '/auth/login' if respond_to?(:redirect_outside)
         redirect '/auth/login'
       end
-      
+
       def logout!
         redirect_outside '/auth/logout' if respond_to?(:redirect_outside)
         redirect '/auth/logout'

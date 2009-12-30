@@ -9,13 +9,13 @@
 # published by the Free Software Foundation, either version 3 of
 # the License, or (at your option) any later version.
 #
-# Foobar is distributed in the hope that it will be useful,
+# Camiloo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
+#
 # You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+# along with Camiloo.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors:
 #   Julien Peeters <contact@julienpeeters.fr>
@@ -28,14 +28,14 @@ module Camiloo
   module Auth
     class User
       include DataMapper::Resource
-      
+
       property :username, String,  :key => true
       property :password, String,  :required => true
       property :fname,    String,  :required => true
       property :lname,    String,  :required => true
-      
+
       has n, :roles, :through => Resource # many_to_many
-      
+
       def initialize(username, passwd, fname='unknown', lname='unknown')
         attribute_set(:username, username)
         attribute_set(:password, Digest::SHA1.hexdigest(passwd))
@@ -66,11 +66,11 @@ module Camiloo
 
     class ContentType
       include DataMapper::Resource
-      
+
       property :name, String, :key => true
-      
+
       has n, :permissions
-      
+
       def add_permission!(symb)
         permissions.first_or_create({ :name => symb.to_s },
                                     { :name => symb.to_s })
@@ -81,14 +81,14 @@ module Camiloo
         permissions.delete_if { |perm| perm.name == symb.to_s }
         permissions.save
       end
-      
+
       def self.by_name(name)
         r = get(name)
         raise ArgumentError, name if r.nil?
         r
       end
     end
-    
+
     class Permission
       include DataMapper::Resource
 
@@ -101,7 +101,7 @@ module Camiloo
       include DataMapper::Resource
 
       property :name, String, :key => true
-      
+
       has n, :permissions, :through => Resource # many_to_many
       has n, :users, :through => Resource # many_to_many
 
@@ -115,7 +115,7 @@ module Camiloo
         end
         permissions.save
       end
-      
+
       def deny!(symb, *args)
         permissions.all(:content_type_name => symb.to_s).delete_if {
           |perm| args.include?(perm.name.to_sym)
