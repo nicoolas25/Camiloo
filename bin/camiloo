@@ -1,0 +1,101 @@
+#!/usr/bin/env ruby
+
+module Camiloo
+
+  FINAL_DIRS = [ 'public',
+                 'public/assets',
+                 'lib',
+                 'lib/camiloo',
+                 'tmp' ]
+
+  RULES = {
+    'src/module.rb' => 'lib/camiloo',
+    'src/modules' => 'lib/camiloo',
+    'resources/config.ru' => '' }
+
+  class Generator
+    def initialize(root, verbose=false)
+      @root = root
+      @verbose = verbose
+      @base = File.expand_path(File.join(File.dirname(__FILE__), '..'))
+    end
+
+    def generate!
+      begin
+        FINAL_DIRS.each { |name| create_directory(name) }
+        RULES.each { |from, to| setup(from, to) }
+        puts "[INFO] generated on path '#{@root}'."
+      rescue Runtimeerror => reason
+        puts "[FATAL] #{reason}"
+      rescue ArgumentError => reason
+        puts "[FATAL] #{reason}"
+      end
+    end
+
+    private
+
+    def create_directory(name)
+      splited = name.split(File::SEPARATOR)
+      path = @root
+      created = false
+      splited.each do |item|
+        path = File.join(path, item)
+        exists = File.exists?(path)
+        Dir.mkdir(path) unless exists
+        created ||= !exists
+      end
+      puts "[INFO] directory '#{name}' created." if @verbose and created
+    end
+
+    def process_directory(name, dest, &block)
+      raise ArgumentError, dirname unless File.directory?(name)
+
+      Dir.new(name).each do |entry|
+        next if entry == '.' or entry == '..'
+
+        path = File.join(name, entry)
+
+        if File.directory?(path)
+          to = File.join(dest, File.basename(name))
+          process_directory(path, to, &block)
+        else
+          to = File.join(dest, File.basename(name))
+          block.call(path, to) if block_given?
+        end
+      end
+    end
+
+    def copy_file(from, to)
+      raise ArgumentError, from unless File.exists?(from) and File.file?(from)
+
+      dest = File.join(@root, to, File.basename(from))
+      create_directory(to) unless File.exists?(dest)
+      raise ArgumentError, to unless File.directory?(File.join(@root, to))
+
+      if need_update?(from, dest)
+        r = system("cp -r #{from} #{dest}")
+        puts "[INFO] file '#{dest}' copied." if @verbose and r
+        raise RuntimeError, "[ERROR] file #{dest} cannot be copied" unless r
+      end
+    end
+
+    def need_update?(from, dest)
+      !File.exists?(dest) or File.mtime(from) > File.mtime(dest)
+    end
+
+    def setup(from, to)
+      from = File.join(@base, from)
+
+      if File.directory?(from)
+        process_directory(from, to) { |from, to| copy_file(from, to) }
+      else
+        copy_file(from, to)
+      end
+    end
+  end
+end # Camiloo
+
+if __FILE__ == $0
+  root = File.expand_path Dir.pwd
+  Camiloo::Generator.new(root, true).generate!
+end
