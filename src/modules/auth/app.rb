@@ -23,24 +23,16 @@
 require 'camiloo/module'
 require 'camiloo/modules/auth/models'
 require 'camiloo/modules/auth/helpers'
+require 'builder'
 
 module Camiloo
   class AuthApp < Camiloo::Module
-    helpers Camiloo::Auth::Helpers
-    
+    set :views, File.dirname(__FILE__) + '/views'
+
     get '/login' do
-      ref = (back == '/') ? base_uri+"/login" : back
-      msg = (user = session[:auth_user]) ? user.username : "Unknown user"
-      msg + "<br/>" +
-        "<form method='POST' action='#{base_uri}/login'>" +
-        "<input type='text' name='user'>" +
-        "<input type='text' name='pass'>" +
-        "<input type='hidden' name='redirect' value='#{ref}'>" +
-        "<input type='submit' value='connect'>" +
-        "</form>" +
-        "<form method='GET' action='#{base_uri}/logout'>" +
-        "<input type='submit' value='lougout'>" +
-        "</form>"
+      @ref = (back == '/') ? base_uri+"/login" : back
+      @msg = (user = session[:auth_user]) ? user.username : "Unknown user"
+      builder :login
     end
 
     get '/logout' do
