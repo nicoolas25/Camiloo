@@ -9,6 +9,7 @@ module Camiloo
                  'tmp' ]
 
   RULES = {
+    'src/urlmap.rb' => 'lib/camiloo',
     'src/module.rb' => 'lib/camiloo',
     'src/modules' => 'lib/camiloo',
     'resources/config.ru' => '' }

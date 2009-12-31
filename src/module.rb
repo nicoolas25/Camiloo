@@ -22,14 +22,21 @@
 #   Nicolas Zermati <nicolas.zermati@gmail.com>
 
 require 'sinatra/base'
+require 'camiloo/urlmap'
 
 module Camiloo
   class Module < Sinatra::Base
+    def initialize *args
+      super
+      @@instances ||= []
+      @@instances << self
+    end
+
     def base_uri
       env['SCRIPT_NAME']
     end
 
-    def redirect(uri, *args)
+    def redirect uri, *args
       base = ''
       if uri !~ /https?:\/\//
         base += base_uri
@@ -37,10 +44,33 @@ module Camiloo
       super(base + uri, *args)
     end
 
-    def redirect_outside(uri, *args)
+    def redirect_outside uri, *args
       status 302
       response['Location'] = uri
       halt(*args)
     end
   end # Module
+
+  class ModuleMixer
+    def initialize app
+      super()
+      xml = Builder::XmlMarkup.new
+      @app = app
+    end
+
+    def call env
+      code, headers, response = @app.call env
+      app = (@app.respond_to? 'matching_app') ? @app.matching_app : @app
+      response = case headers['Content-Type']
+      when "text/html"
+        response.insert 0, "<!doctype html public \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html>\n<head>\n<title>"
+        response.insert 1, app.options.title
+        response.insert 2, "</title>\n</head>\n<body>\n<div class='content'>"
+        response << "</div>\n</body>\n</html>"
+      else
+        response
+      end
+      [code, headers, response]
+    end
+  end # ModuleMixer
 end # Camiloo

@@ -27,6 +27,8 @@ require 'dm-core'
 require 'camiloo/modules/auth'
 
 use Rack::ShowExceptions
+use Rack::Session::Pool
+use Camiloo::ModuleMixer
 
 DataMapper.setup(:default, 'sqlite3::memory:')
 DataMapper.auto_migrate!
@@ -34,6 +36,5 @@ DataMapper.auto_migrate!
 Camiloo::Auth::User.new('admin', 'admin', 'Administrator')
 
 map '/auth' do
-  use Rack::Session::Pool
   run Camiloo::AuthApp.new
 end

@@ -27,8 +27,6 @@ require 'builder'
 
 module Camiloo
   class AuthApp < Camiloo::Module
-    set :views, File.dirname(__FILE__) + '/views'
-
     get '/login' do
       @ref = (back == '/') ? base_uri+"/login" : back
       @msg = (user = session[:auth_user]) ? user.username : "Unknown user"
@@ -53,5 +51,7 @@ module Camiloo
         redirect '/login'
       end
     end
+    set :title, "Authentication" 
+    set :views, File.dirname(__FILE__) + '/views'
   end
 end # Camiloo
